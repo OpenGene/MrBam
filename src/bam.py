@@ -1,14 +1,13 @@
 import pysam
 
-def get_reads(o, p):
+def get_reads(o, chr, pos):
     "get all reads covers chr:pos"
 
     samfile = pysam.AlignmentFile(o.reads, "rb")
 
-    ch, pos = p.split(':')
     pos = int(pos) - 1 # 0-based leftmost coordinate
 
-    for read in samfile.fetch(ch, pos, pos+1):
+    for read in samfile.fetch(chr, pos, pos+1):
         aligned_pairs = read.get_aligned_pairs(matches_only=True)
 
         try:
@@ -21,8 +20,11 @@ def get_reads(o, p):
             read.query_sequence[query_pos],
             read.query_qualities[query_pos],
             read.reference_start,
+            read.reference_length,
             read.next_reference_start,
-            read.template_length
+            read.template_length,
+            read.is_reverse,
+            read.is_paired and not read.mate_is_unmapped
         )
 
     samfile.close()
