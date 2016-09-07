@@ -1,9 +1,9 @@
-import pysam
+from pysam import AlignmentFile
 
-def get_reads(o, chr, pos):
+def get_reads(o, file, chr, pos):
     "get all reads covers chr:pos"
 
-    samfile = pysam.AlignmentFile(o.reads, "rb")
+    samfile = AlignmentFile(file, "rb")
 
     pos = int(pos) - 1 # 0-based leftmost coordinate
 
@@ -22,7 +22,7 @@ def get_reads(o, chr, pos):
             read.reference_start,
             read.reference_length,
             read.next_reference_start,
-            read.template_length,
+            abs(read.template_length),
             read.is_reverse,
             read.is_paired and not read.mate_is_unmapped
         )

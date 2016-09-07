@@ -1,16 +1,44 @@
 #!/usr/bin/env python3
 
-from argparse import ArgumentParser
+from os.path import splitext
+from argparse import ArgumentParser, HelpFormatter
 from anno import anno
 
-parser = ArgumentParser()
+class SingleMetavarHelpFormatter(HelpFormatter):
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            metavar, = self._metavar_formatter(action, action.dest)(1)
+            return metavar
+        else:
+            parts = []
+            if action.nargs == 0:
+                parts.extend(action.option_strings)
+            else:
+                default = action.dest.upper()
+                args_string = self._format_args(action, default)
+                parts.extend(action.option_strings)
+                parts[-1] += ' %s' % args_string
+            return ', '.join(parts)
+
+parser = ArgumentParser(formatter_class=SingleMetavarHelpFormatter)
 
 parser.add_argument('query', help="vcf file contains mutations to query")
-parser.add_argument('reads', help="bam file contains origin reads info. There must be a corresponding .bai file in the same directory")
-parser.add_argument('--quality', '-q', type=int, default=20, help="drop bases whose qulity is less than this")
-parser.add_argument('--ref', '-r', help="reference file. If not provided, consider the mode of reads as the ref")
-parser.add_argument('--verbos', '-v', action='store_true', help="output debug info")
+parser.add_argument('-c', '--cfdna', help="bam file contains cfdna reads info. There must be a corresponding .bai file in the same directory")
+parser.add_argument('-g', '--gdna', help="bam file contains gdna reads info. There must be a corresponding .bai file in the same directory")
+parser.add_argument('-o', '--output', help="output vcf file. Will be overwrite if already exists")
+parser.add_argument('-i', '--info', default="/dev/null", help="additional infomations about these position")
+parser.add_argument('-q', '--qual', type=int, default=20, help="drop bases whose qulity is less than this (default: 20)")
+parser.add_argument('-v', '--verbos', action='store_true', help="output debug info")
 
 o = parser.parse_args()
+
+if o.cfdna == None and o.gdna == None:
+    parser.print_usage()
+    print("\nERROR: At least one of --cfdna and --gdna should be specified")
+    quit()
+
+if o.output == None:
+    basename, extname = splitext(o.query)
+    o.output = basename + "_MrBam" + extname
 
 anno(o)

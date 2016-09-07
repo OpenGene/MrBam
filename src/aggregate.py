@@ -2,17 +2,11 @@ def aggregate_reads(o, reads):
     "aggregate reads by startpos, endpos and base"
 
     name_dict     = {} # name -> reads
-    unique_pairs  = {} # start, length, base, is_overlap -> quality
-    unique_single = {} # start, length, base, is_reverse -> quality
+    unique_pairs  = {} # start, length, base, is_overlap -> qualities
+    unique_single = {} # start, length, base, is_reverse -> qualities
 
     nsum,  nerror    = 0, 0 # depth, errors (such as 3 reads share the same name)
     nlowq, ninconsis = 0, 0 # low quality bases, inconsistent pairs (count on reads)
-
-    def try_append(d, k, v):
-        if k in d:
-            d[k].append(v)
-        else:
-            d[k] = [v]
 
     for read in reads:
         name, *info = read
@@ -23,11 +17,9 @@ def aggregate_reads(o, reads):
         if len(reads) == 1: # non-overlap or single
             base, qual, r1start, r1len, r2start, tlen, isrev, paired = reads[0]
 
-            if qual <= o.quality:
+            if qual <= o.qual:
                 nlowq += 1
                 continue
-
-            tlen = abs(tlen)
 
             if paired:
                 start = min(r1start, r2start)
@@ -40,7 +32,7 @@ def aggregate_reads(o, reads):
             base1, qual1, r1start1, r1len, r2start1, tlen1, isrev1, paired1 = r1
             base2, qual2, r1start2, r1len, r2start2, tlen2, isrev2, paired2 = r2
 
-            if qual1 <= o.quality or qual2 <= o.quality:
+            if qual1 <= o.qual or qual2 <= o.qual:
                 nlowq += 2
                 continue
 
@@ -49,10 +41,9 @@ def aggregate_reads(o, reads):
                 continue
 
             start = min(r1start1, r2start1)
-            tlen  = abs(tlen1)
             qual  = max(qual1, qual2)
 
-            try_append(unique_pairs, (start, tlen, base1, True), qual)
+            try_append(unique_pairs, (start, tlen1, base1, True), qual)
 
         else: # error
             if o.verbos:
@@ -60,3 +51,9 @@ def aggregate_reads(o, reads):
             nerror += len(reads)
 
     return unique_pairs, unique_single, nsum, nerror, nlowq, ninconsis
+
+def try_append(d, k, v):
+    if k in d:
+        d[k].append(v)
+    else:
+        d[k] = [v]
