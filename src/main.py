@@ -2,6 +2,7 @@
 
 from os.path import splitext
 from argparse import ArgumentParser, HelpFormatter
+from pysam import AlignmentFile
 from anno import anno
 
 class SingleMetavarHelpFormatter(HelpFormatter):
@@ -36,6 +37,11 @@ if o.cfdna == None and o.gdna == None:
     parser.print_usage()
     print("\nERROR: At least one of --cfdna and --gdna should be specified")
     quit()
+
+if o.cfdna != None:
+    o.cfdna = AlignmentFile(o.cfdna, "rb")
+if o.gdna != None:
+    o.gdna = AlignmentFile(o.gdna, "rb")
 
 if o.output == None:
     basename, extname = splitext(o.query)

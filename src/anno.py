@@ -43,9 +43,9 @@ def anno(o):
             line[-2] += ':' # gdna
             line[-1] += ':' # cfdna
 
-            for i, file in enumerate((o.cfdna, o.gdna)):
-                if file != None:
-                    reads = get_reads(o, file, chr, pos)
+            for i, sam in enumerate((o.cfdna, o.gdna)):
+                if sam != None:
+                    reads = get_reads(o, sam, chr, pos)
                     unique_pairs, unique_single, *_ = aggregate_reads(o, reads)
                     line[-i-1] += ','.join(map(str, count_different_type(unique_pairs, unique_single, alt, ref)))
 
