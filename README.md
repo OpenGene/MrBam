@@ -9,7 +9,7 @@ For a given mutation, query its mutated reads from a BAM, merge the reads by pos
 # Usage
 
 ```
-$ ./MrBam/src/main.py --help
+$ ./MrBam/main.py --help
 usage: main.py [-h] [-c CFDNA] [-g GDNA] [-o OUTPUT] [-i INFO] [-q QUAL] [-v]
                query
 
