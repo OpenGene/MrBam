@@ -1,0 +1,14 @@
+language: python
+python:
+    - "3.4"
+    - "3.5"
+before_install:
+    - sudo apt-get install samtools
+install:
+    - pip install pysam
+    - pip install coveralls
+    - pip install pytest
+script:
+    - coverage run --source=MrBam -m pytest
+after_success:
+    - coveralls

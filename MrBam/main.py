@@ -3,7 +3,7 @@
 from os.path import splitext
 from argparse import ArgumentParser, HelpFormatter
 from pysam import AlignmentFile
-from anno import anno
+from MrBam.anno import anno
 
 class SingleMetavarHelpFormatter(HelpFormatter):
     def _format_action_invocation(self, action):

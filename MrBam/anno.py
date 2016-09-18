@@ -1,5 +1,5 @@
-from bam import get_reads
-from aggregate import aggregate_reads
+from MrBam.bam import get_reads
+from MrBam.aggregate import aggregate_reads
 from enum import Enum
 
 class State(Enum):
