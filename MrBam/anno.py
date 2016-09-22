@@ -1,5 +1,6 @@
 from MrBam.bam import get_reads
 from MrBam.aggregate import aggregate_reads
+from MrBam.count import count_different_type
 from enum import Enum
 
 class State(Enum):
@@ -30,7 +31,10 @@ def anno(o):
             fout.write(line)
 
         def add_head(line):
-            fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique_Overlapped_Pairs_Support_Ref, Unique_Non_Overlapped_Pairs_Support_Ref, Unique_Single_Support_Ref, Unique_Overlapped_Pairs_Support_Alt, Unique_Non_Overlapped_Pairs_Support_Alt, Unique_Single_Support_Alt">\n""")
+            if o.simple:
+                fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique DNA Supports Alt, Non-Overlaps Are Treated As Single. Comma Separated: Multiple_Overlap, One_Overlap, Multiple_Single, One_Single">\n""")
+            else:
+                fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique DNA. Comma Separated: Multiple_Overlap_Ref, Multiple_Nonoverlap_Ref, Multiple_Single_Ref,One_Overlap_Ref,One_Nonoverlap_Ref,One_Single_Ref, Multiple_Overlap_Alt, Multiple_Nonoverlap_Alt, Multiple_Single_Alt,One_Overlap_Alt,One_Nonoverlap_Alt,One_Single_Alt">\n""")
             fout.write(line)
 
         def anno(line):
@@ -47,7 +51,11 @@ def anno(o):
                 if sam != None:
                     reads = get_reads(o, sam, chr, pos)
                     unique_pairs, unique_single, *_ = aggregate_reads(o, reads)
-                    line[-i-1] += ','.join(map(str, count_different_type(unique_pairs, unique_single, alt, ref)))
+                    mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, _ = count_different_type(o, unique_pairs, unique_single, alt, ref)
+                    if o.simple:
+                        line[-i-1] += ','.join(map(str, (moa, mna + msa, ooa, ona + osa)))
+                    else:
+                        line[-i-1] += ','.join(map(str, (mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa)))
 
             print(file=fout, sep='\t', *line)
 
@@ -56,26 +64,3 @@ def anno(o):
         for line in fin:
             action, state = dispatch(state, line)
             action(line)
-
-def count_different_type(unique_pairs, unique_single, alt, ref):
-    opr, npr, sr, opa, npa, sa = 0, 0, 0, 0, 0, 0
-
-    for *_, base, paired in unique_pairs:
-        if base in alt:
-            if paired:
-                opa += 1
-            else:
-                npa += 1
-        elif base == ref:
-            if paired:
-                opr += 1
-            else:
-                npr += 1
-
-    for *_, base, _ in unique_single:
-        if base in alt:
-            sa += 1
-        elif base == ref:
-            sr += 1
-
-    return opr, npr, sr, opa, npa, sa

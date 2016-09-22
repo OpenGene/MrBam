@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('-o', '--output', help="output vcf file. Will be overwrite if already exists")
     parser.add_argument('-i', '--info', default="/dev/null", help="additional infomations about these position")
     parser.add_argument('-q', '--qual', type=int, default=20, help="drop bases whose qulity is less than this (default: 20)")
+    parser.add_argument('-s', '--simple', action='store_true', help="annotate less infomations into vcf output")
     parser.add_argument('-v', '--verbos', action='store_true', help="output debug info")
 
     return parser.parse_args()
