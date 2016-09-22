@@ -2,8 +2,8 @@ def aggregate_reads(o, reads):
     "aggregate reads by startpos, endpos and base"
 
     name_dict     = {} # name -> reads
-    unique_pairs  = set() # (start, length, base, is_overlap)
-    unique_single = set() # (start, length, base, is_reverse)
+    unique_pairs  = {} # start, length, base, is_overlap -> qualities
+    unique_single = {} # start, length, base, is_reverse -> qualities
 
     nsum,  nerror    = 0, 0 # depth, errors (such as 3 reads share the same name)
     nlowq, ninconsis = 0, 0 # low quality bases, inconsistent pairs (count on reads)
@@ -23,9 +23,9 @@ def aggregate_reads(o, reads):
 
             if paired:
                 start = min(r1start, r2start)
-                unique_pairs.add((start, tlen, base, False))
+                try_append(unique_pairs, (start, tlen, base, False), qual)
             else:
-                unique_single.add((r1start, tlen, base, isrev))
+                try_append(unique_single, (r1start, tlen, base, isrev), qual)
 
         elif len(reads) == 2: # overlap
             r1, r2 = reads
@@ -43,7 +43,7 @@ def aggregate_reads(o, reads):
             start = min(r1start1, r2start1)
             qual  = max(qual1, qual2)
 
-            unique_pairs.add((start, tlen1, base1, True))
+            try_append(unique_pairs, (start, tlen1, base1, True), qual)
 
         else: # error
             if o.verbos:
