@@ -1,8 +1,5 @@
-from MrBam.bam import get_reads
 from MrBam.aggregate import aggregate_reads
-from helper import make_bam
 from argparse import Namespace
-from pysam import AlignmentFile
 
 def test_aggregate_reads_1():
     "it should aggregate pairs"
@@ -69,27 +66,3 @@ def test_aggregate_reads_4():
 
     assert len(unique_pairs) == 1
     assert ninconsis == 2
-
-def test_aggregate_reads_5():
-    "work with reads returned by MrBam.bam"
-
-    o = Namespace(verbos=False, qual=20)
-
-    make_bam(tmpdir.strpath, """
-             123456789_123456789_12
-        r1 + ...........
-        r1 -      ......*....
-        r2 +   .........*.
-        r2 -       .....*.......
-        r3 +       ...........
-        r3 -            ....*......
-        r4 +       ...........
-        r4 -            ...........
-             123456789_123456789_12
-    """)
-
-    sam = AlignmentFile(tmpdir.join("test.bam").strpath)
-
-    unique_pairs, unique_single, *_ = aggregate_reads(o, get_reads(o, sam, 'ref', '12'))
-
-    assert len(unique_pairs) == 3

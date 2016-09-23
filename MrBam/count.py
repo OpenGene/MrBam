@@ -1,9 +1,9 @@
 from collections import Counter
 
-def count_different_type(o, unique_pairs, unique_single, alt, ref):
+def count_different_type(o, pairs, single, alt, ref):
     mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, inconsis = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-    for (*_, overlaped), reads in unique_pairs.items():
+    for (*_, overlaped), reads in pairs.items():
         c = Counter( base for base, qual in reads )
         base, num_major = c.most_common(1)[0]
         num_all = sum(c.values())
@@ -35,7 +35,7 @@ def count_different_type(o, unique_pairs, unique_single, alt, ref):
                 else:
                     mnr += 1
 
-    for reads in unique_single.values():
+    for reads in single.values():
         c = Counter( base for base, qual in reads )
         base, num_major = c.most_common(1)[0]
         num_all = sum(c.values())

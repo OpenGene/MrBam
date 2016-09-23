@@ -5,7 +5,7 @@ def make_bam(dir, s):
     """
     generates test.sam, test.bam, test.bai and test.vcf under $dir by $s
 
-    underline: clipped base
+    underline: soft clipped
     dot: base that support ref
     star: base that support alt
 
@@ -66,6 +66,26 @@ def make_bam(dir, s):
             t = ''.join(r.seq).lstrip('_')
             r.pos = r.start + len(r.seq) - len(t)
             r.len = len(t.rstrip('_'))
+
+    def gen_vcf():
+        mut = [0] * total_length
+
+        for r in reads:
+            for (i,c) in enumerate(r.seq):
+                if c == '*':
+                    mut[r.start + i] += 1
+
+        with open(dir + "/test.vcf", "w") as fout:
+            fout.write("##fileformat=VCFv4.1\n")
+            fout.write("##source=MrBam\n")
+            fout.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tFORMAT\tNORMAL\tTUMOR\n")
+
+            for i in range(total_length):
+                if mut[i] > 0:
+                    print(
+                        'ref', i, '.', ref[i], alt[i], '.', 'PASS', 'AD', 0, mut[i],
+                        file=fout, sep='\t'
+                    )
 
     def replace_mask():
         for i in range(max( r.end for r in reads )):
@@ -130,6 +150,7 @@ def make_bam(dir, s):
     ref, alt = generate_random_sequence()
     calc_cigar()
     calc_pos()
+    gen_vcf()
     replace_mask()
     find_mates()
     calc_tlen()

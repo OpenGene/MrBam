@@ -13,8 +13,8 @@ For a given mutation, query its mutated reads from a BAM, merge the reads by pos
 
 ```
 $ python -m MrBam.main --help
-usage: main.py [-h] [-c CFDNA] [-g GDNA] [-o OUTPUT] [-i INFO] [-q QUAL] [-v]
-               query
+usage: main.py [-h] [-c CFDNA] [-g GDNA] [-o OUTPUT] [-i INFO] [-q QUAL] [-s]
+               [-v] query
 
 positional arguments:
   query                vcf file contains mutations to query
@@ -28,6 +28,7 @@ optional arguments:
   -o, --output OUTPUT  output vcf file. Will be overwrite if already exists
   -i, --info INFO      additional infomations about these position
   -q, --qual QUAL      drop bases whose qulity is less than this (default: 20)
+  -s, --simple         annotate less infomations into vcf output
   -v, --verbos         output debug info
 ```
 
