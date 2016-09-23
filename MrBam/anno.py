@@ -4,26 +4,28 @@ from MrBam.count import count_different_type
 from enum import Enum
 
 class State(Enum):
-    start   = 0
-    head    = 1
-    comment = 2
-    body    = 3
+    before = 0 # info before ##FORMAT
+    under  = 1 # ##FORMAT
+    after  = 2 # info after ##FORMAT
+    body   = 3
 
 def anno(o):
     "annotate vcf file, adding basic infomations into INFO columns"
 
     with open(o.query) as fin, open(o.output, 'w') as fout:
         def dispatch(state, line):
-            if line.startswith('##'):
-                if state in (State.start, State.head):
-                    return copy, State.head
+            if line.startswith('##FORMAT'):
+                if state in (State.before, State.under):
+                    return copy, State.under
                 else:
                     raise Exception("unexpected " + line)
             elif line.startswith('#'):
-                if state == State.head:
-                    return add_head, State.comment
+                if state in (State.before, State.after):
+                    return copy, state
+                elif state == State.under:
+                    return add_head, State.after
                 else:
-                    return copy, State.comment
+                    raise Exception("unexpected " + line)
             else:
                 return anno, State.body
 
@@ -59,7 +61,7 @@ def anno(o):
 
             print(file=fout, sep='\t', *line)
 
-        state = State.start
+        state = State.before
 
         for line in fin:
             action, state = dispatch(state, line)

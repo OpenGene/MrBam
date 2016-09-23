@@ -7,6 +7,7 @@ def test_get_reads_1(tmpdir):
     "it should get all but only the reads that covers the given position"
 
     make_bam(tmpdir.strpath, """
+             123456789_123456789_12
         r1 + ...........
         r1 -      ......*....
         r2 +   .........*.
@@ -15,6 +16,7 @@ def test_get_reads_1(tmpdir):
         r3 -            ....*......
         r4 +       ...........
         r4 -            ...........
+             123456789_123456789_12
     """)
 
     o = Namespace(verbos=False)
@@ -28,6 +30,7 @@ def test_get_reads_2(tmpdir):
     "it should read properties correctly"
 
     make_bam(tmpdir.strpath, """
+             123456789_123
         r1 + ...*.......
         r1 -   .*.........
     """)

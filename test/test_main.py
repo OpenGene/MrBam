@@ -14,6 +14,7 @@ def test_init_2(tmpdir):
     "it should open sam file if provided"
 
     make_bam(tmpdir.strpath, """
+             123456789_123456789_
         r1 + ...........
         r1 -       ......*....
         r2 +    .........*.
@@ -31,6 +32,7 @@ def test_init_3(tmpdir):
     "it should generate a proper output file name if not provided"
 
     make_bam(tmpdir.strpath, """
+             123456789_123456789_
         r1 + ...........
         r1 -       ......*....
         r2 +    .........*.
