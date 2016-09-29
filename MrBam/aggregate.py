@@ -1,4 +1,6 @@
-def aggregate_reads(o, reads):
+from MrBam.tools import try_append
+
+def aggregate_reads(o, reads, adjusted_pos=None):
     "aggregate reads by startpos, endpos and base"
 
     name_dict     = {} # name -> reads
@@ -22,28 +24,32 @@ def aggregate_reads(o, reads):
                 continue
 
             if paired:
-                start = min(r1start, r2start)
+                if o.fast:
+                    start = min(r1start, r2start)
+                else:
+                    start, tlen = adjusted_pos[name]
                 try_append(unique_pairs, (start, tlen, False), (base, qual))
             else:
-                try_append(unique_single, (r1start, tlen, isrev), (base, qual))
+                try_append(unique_single, (r1start, r1len, isrev), (base, qual))
 
         elif len(reads) == 2: # overlap
             r1, r2 = reads
-            base1, qual1, r1start1, r1len, r2start1, tlen1, isrev1, paired1 = r1
-            base2, qual2, r1start2, r1len, r2start2, tlen2, isrev2, paired2 = r2
+            r1base, r1qual, r1start, r1len, *_ = r1
+            r2base, r2qual, r2start, r2len, *_ = r2
 
-            if qual1 <= o.qual or qual2 <= o.qual:
+            if r1qual <= o.qual or r2qual <= o.qual:
                 nlowq += 2
                 continue
 
-            if base1 != base2:
+            if r1base != r2base:
                 ninconsis += 2
                 continue
 
-            start = min(r1start1, r2start1)
-            qual  = max(qual1, qual2)
+            start = min(r1start, r2start)
+            tlen  = max(r1start+r1len, r2start+r2len) - start
+            qual  = max(r1qual, r2qual)
 
-            try_append(unique_pairs, (start, tlen1, True), (base1, qual))
+            try_append(unique_pairs, (start, tlen, True), (r1base, qual))
 
         else: # error
             if o.verbos:
@@ -51,9 +57,3 @@ def aggregate_reads(o, reads):
             nerror += len(reads)
 
     return unique_pairs, unique_single, nsum, nerror, nlowq, ninconsis
-
-def try_append(d, k, v):
-    if k in d:
-        d[k].append(v)
-    else:
-        d[k] = [v]

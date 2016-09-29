@@ -27,6 +27,7 @@ def test_anno_1(tmpdir):
         gdna   = None,
         simple = True,
         verbos = False,
+        fast   = False,
         qual   = 20,
         output = tmpdir.join("test_MrBam.vcf").strpath
     )

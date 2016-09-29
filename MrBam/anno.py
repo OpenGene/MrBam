@@ -1,4 +1,4 @@
-from MrBam.bam import get_reads
+from MrBam.bam import get_reads, pad_softclip
 from MrBam.aggregate import aggregate_reads
 from MrBam.count import count_different_type
 from enum import Enum
@@ -52,7 +52,7 @@ def anno(o):
             for i, sam in enumerate((o.cfdna, o.gdna)):
                 if sam != None:
                     reads = get_reads(o, sam, chr, pos)
-                    unique_pairs, unique_single, *_ = aggregate_reads(o, reads)
+                    unique_pairs, unique_single, *_ = aggregate_reads(o, reads, None if o.fast else pad_softclip(sam))
                     mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, _ = count_different_type(o, unique_pairs, unique_single, alt, ref)
                     if o.simple:
                         line[-i-1] += ','.join(map(str, (moa, mna + msa, ooa, ona + osa)))

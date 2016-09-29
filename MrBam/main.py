@@ -27,10 +27,11 @@ def parse_args():
     parser.add_argument('query', help="vcf file contains mutations to query")
     parser.add_argument('-c', '--cfdna', help="bam file contains cfdna reads info. There must be a corresponding .bai file in the same directory")
     parser.add_argument('-g', '--gdna', help="bam file contains gdna reads info. There must be a corresponding .bai file in the same directory")
-    parser.add_argument('-o', '--output', help="output vcf file. Will be overwrite if already exists")
+    parser.add_argument('-o', '--output', help="output vcf file. Will be overwritten if already exists")
     parser.add_argument('-i', '--info', default="/dev/null", help="additional infomations about these position")
     parser.add_argument('-q', '--qual', type=int, default=20, help="drop bases whose qulity is less than this (default: 20)")
     parser.add_argument('-s', '--simple', action='store_true', help="annotate less infomations into vcf output")
+    parser.add_argument('-f', '--fast', action='store_true', help="do not infer origin read size by CIGAR, it can be faster and consume less memory.")
     parser.add_argument('-v', '--verbos', action='store_true', help="output debug info")
 
     return parser.parse_args()
