@@ -28,6 +28,10 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                     start = min(r1start, r2start)
                 else:
                     start, tlen = adjusted_pos[name]
+                    if start < 0:
+                        if o.verbos:
+                            print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, tlen))
+                        continue
                 try_append(unique_pairs, (start, tlen, False), (base, qual))
             else:
                 try_append(unique_single, (r1start, r1len, isrev), (base, qual))

@@ -43,7 +43,7 @@ def pad_softclip(sam):
 
     for k, v in namedict.items():
         if len(v) != 2:
-            pass #TODO
+            pairdict[k] = -1, len(v)
         else:
             start  = min(map(lambda x: x[0], v))
             length = max(map(lambda x: x[1], v)) - start

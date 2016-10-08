@@ -80,7 +80,7 @@ def test_pad_softclip_2(tmpdir):
 
     adjusted_pos = pad_softclip(sam)
 
-    assert len(adjusted_pos) == 1
+    assert sum(1 for startpos, length in adjusted_pos.values() if startpos != -1) == 1
 
 def test_pad_softclip_3(tmpdir):
     "it should pad softclipped bases"
