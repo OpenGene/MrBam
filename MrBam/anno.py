@@ -43,7 +43,6 @@ def anno(o):
             line = line.rstrip().split('\t')
 
             chr, pos, _, ref, alt = line[:5]
-            alt = alt.split('/')
 
             line[-3] += ':UDP' # format
             line[-2] += ':' # gdna

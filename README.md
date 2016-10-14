@@ -32,7 +32,7 @@ optional arguments:
   -v, --verbos         output debug info
 ```
 
-# Benchmark
+# Performace
 
 ```
 #sample  option    bam_size(mb)  vcf_lines  CPU_time(s)  Memory(mb)

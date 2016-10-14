@@ -19,7 +19,7 @@ def aggregate_reads(o, reads, adjusted_pos=None):
         if len(reads) == 1: # non-overlap or single
             base, qual, r1start, r1len, r2start, tlen, isrev, paired = reads[0]
 
-            if qual <= o.qual:
+            if 0 <= qual <= o.qual:
                 nlowq += 1
                 continue
 
@@ -41,7 +41,7 @@ def aggregate_reads(o, reads, adjusted_pos=None):
             r1base, r1qual, r1start, r1len, *_ = r1
             r2base, r2qual, r2start, r2len, *_ = r2
 
-            if r1qual <= o.qual or r2qual <= o.qual:
+            if 0 <= r1qual <= o.qual or 0 <= r2qual <= o.qual:
                 nlowq += 2
                 continue
 
