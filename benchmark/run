@@ -1,0 +1,80 @@
+#!/usr/bin/env julia
+if length(ARGS) != 1
+    print(s"""
+
+        Usage: run_benchmark <process_num>
+
+        Benchmark requires real data. Current work directory should has the following structure
+
+        .
+        ├── Sam1.bai
+        ├── Sam1.bam
+        ├── Sam1.vcf
+        └── ...
+
+        Example:
+            $ setsid ./run_benchmark 32 > log 2>&1
+
+        """)
+    exit(0)
+end
+
+macro rel_str(x) joinpath(Base.source_dir(), split(x, '/')...) end
+
+samples = let
+    f   = readdir(".")
+    bam = map(x->x[1:end-4], filter(x->endswith(x, ".bam"), f)) |> Set
+    bai = map(x->x[1:end-4], filter(x->endswith(x, ".bai"), f)) |> Set
+    vcf = map(x->x[1:end-4], filter(x->endswith(x, ".vcf"), f)) |> Set
+    intersect(bam, bai, vcf)
+end
+
+fout = open("result", "w")
+
+cond, nlimit, nruning = Condition(), parse(Int, ARGS[1]), 0
+
+cwd = pwd()
+
+options = ((), "--fast")
+
+tasks = [ (x, start(options)) for x in samples ]
+
+0 < nlimit <= length(tasks) || (nlimit = length(tasks))
+
+@printf(fout, "%-9s%-8s%-14s%-11s%-13s%-12s\n", "#sample", "option", "bam_size(mb)", "vcf_lines", "CPU_time(s)", "Memory(mb)")
+
+while !isempty(tasks) || nruning != 0
+    if isempty(tasks) || nruning == nlimit
+        wait(cond)
+        nruning -= 1
+        continue
+    end
+
+    let
+        sample, iter = shift!(tasks)
+        option, iter = next(options, iter)
+        nruning += 1
+
+        @schedule try
+            r = let
+                cmd = setenv(`/usr/bin/time -f "%S %U %M" python3 -m MrBam.main $option $cwd/$(sample).vcf -c $cwd/$(sample).bam`, dir=rel"..")
+                err = spawn(cmd, (DevNull, STDOUT, Pipe())).err
+                close(err.in)
+                readchomp(err)
+            end
+
+            sys, user, memo = map(parse, split(r, ' '))
+            bam_size  = filesize("$cwd/$(sample).bam") >> 20
+            vcf_lines = count(x->!startswith(x, '#'), eachline("$cwd/$(sample).vcf"))
+            @printf(fout, "%-9s%-8s%-14s%-11s%-13s%-12s\n", sample, option, bam_size, vcf_lines, ceil(Int, sys+user), memo>>10)
+        catch e
+            println(STDERR, e)
+            @printf(fout, "%-9s%-8s%-14s%-11s%-13s%-12s\n", sample, option, "ERROR", "ERROR", "ERROR", "ERROR")
+        finally
+            done(options, iter) || push!(tasks, (sample, iter))
+            notify(cond)
+        end
+    end
+end
+
+close(fout)

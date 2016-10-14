@@ -32,4 +32,22 @@ optional arguments:
   -v, --verbos         output debug info
 ```
 
+# Benchmark
+
+```
+#sample  option    bam_size(mb)  vcf_lines  CPU_time(s)  Memory(mb)
+Sam3     (default) 194           14978      147          1116
+Sam3     --fast    194           14978      129          27
+Sam2     (default) 655           33702      500          3162
+Sam2     --fast    655           33702      417          28
+Sam1     (default) 1620          113066     5952         8377
+Sam1     --fast    1620          113066     5785         34
+Sam4     (default) 2338          648336     49067        9912
+Sam4     --fast    2338          648336     60393        36
+```
+
+* CPU_time is user + sys
+* Memory may vary accroding to system memory pressure
+* Test on Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
+
 # Under development
