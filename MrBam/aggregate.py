@@ -21,6 +21,8 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
             if 0 <= qual <= o.qual:
                 nlowq += 1
+                if o.verbos:
+                    print("low quality: " + name)
                 continue
 
             if paired:
@@ -43,10 +45,14 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
             if 0 <= r1qual <= o.qual or 0 <= r2qual <= o.qual:
                 nlowq += 2
+                if o.verbos:
+                    print("low quality: " + name)
                 continue
 
             if r1base != r2base:
                 ninconsis += 2
+                if o.verbos:
+                    print("pair inconsistent: " + name)
                 continue
 
             start = min(r1start, r2start)

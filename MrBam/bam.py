@@ -9,6 +9,8 @@ def get_reads(o, sam, chr, pos):
         aligned_pairs = read.get_aligned_pairs(matches_only=True)
 
         if len(aligned_pairs) == 0:
+            if o.verbos:
+                print("read not aligned: " + read.query_name)
             continue
 
         try:
