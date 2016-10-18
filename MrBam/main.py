@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from os.path import splitext
-from argparse import ArgumentParser, HelpFormatter
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pysam import AlignmentFile
 from MrBam.anno import anno
 
-class SingleMetavarHelpFormatter(HelpFormatter):
+class SingleMetavarHelpFormatter(RawDescriptionHelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings:
             metavar, = self._metavar_formatter(action, action.dest)(1)
@@ -22,7 +22,9 @@ class SingleMetavarHelpFormatter(HelpFormatter):
             return ', '.join(parts)
 
 def parse_args():
-    parser = ArgumentParser(formatter_class=SingleMetavarHelpFormatter)
+    description = "example:\n  $ MrBam sample.vcf --cfdna sample_cfdna.bam -o sample_MrBam.vcf --simple"
+
+    parser = ArgumentParser(formatter_class=SingleMetavarHelpFormatter, description=description)
 
     parser.add_argument('query', help="vcf file contains mutations to query")
     parser.add_argument('-c', '--cfdna', help="bam file contains cfdna reads info. There must be a corresponding .bai file in the same directory")
@@ -42,8 +44,13 @@ def init(o):
 
     if o.cfdna != None:
         o.cfdna = AlignmentFile(o.cfdna, "rb")
+        if not o.cfdna.has_index():
+            raise Exception("Index not found, use `samtools index` to generate")
+
     if o.gdna != None:
         o.gdna = AlignmentFile(o.gdna, "rb")
+        if not o.gdna.has_index():
+            raise Exception("Index not found, use `samtools index` to generate")
 
     if o.output == None:
         basename, extname = splitext(o.query)
