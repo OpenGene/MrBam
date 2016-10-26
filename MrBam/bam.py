@@ -6,7 +6,7 @@ def get_reads(o, sam, chr, pos):
     pos = int(pos) - 1 # 0-based leftmost coordinate
 
     for read in sam.fetch(chr, pos, pos+1):
-        aligned_pairs = read.get_aligned_pairs(matches_only=True)
+        aligned_pairs = read.get_aligned_pairs()
 
         if len(aligned_pairs) == 0:
             if o.verbos:
@@ -22,7 +22,7 @@ def get_reads(o, sam, chr, pos):
             else:
                 t = 'M'
         except:
-            t = 'D'
+            continue
 
         yield (
             read.query_name,
@@ -38,7 +38,7 @@ def get_reads(o, sam, chr, pos):
 
 @memo
 def pad_softclip(sam):
-    "return a dict of name -> startpos, length, where softclipped basees were padded"
+    "return a dict of name -> startpos, length, where softclipped bases were padded"
 
     namedict, pairdict = {}, {}
 

@@ -14,7 +14,9 @@ def count_different_type(o, pairs, single, alt, ref):
         num_all = sum(c.values())
 
         if num_major / num_all < 0.9:
-            inconsis += 1
+            if o.verbos:
+                print("reads have different base at the same pos (%d %s, %d others): " % (num_major, base, num_all - num_major))
+            inconsis += num_all
             continue
 
         if num_all == 1:

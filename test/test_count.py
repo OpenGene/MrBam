@@ -21,7 +21,7 @@ def test_count_different_type_1():
 
     mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, inconsis = count_different_type(o, pair, {}, 'T', 'A')
 
-    assert inconsis == 2
+    assert inconsis == 6
     assert sum((mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa)) == 0
 
 def test_count_different_type_2():
