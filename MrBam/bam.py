@@ -30,11 +30,44 @@ def get_reads(o, sam, chr, pos):
             -1 if t in ('D', 'I') else read.query_qualities[query_pos],
             read.reference_start - read.query_alignment_start,
             read.infer_query_length(),
+            -1 if o.mismatch_limit == -1 else nmismatch(read),
             read.next_reference_start,
             abs(read.template_length),
             read.is_reverse,
             read.is_paired and not read.mate_is_unmapped
         )
+
+def nmismatch(read):
+    try:
+        md = read.get_tag('MD')
+        
+        deletion, snp = False, 0
+        for i in md:
+            if i == '^':
+                deletion = True
+            elif i in 'ATCG':
+                snp += not deletion
+            else:
+                deletion = False
+
+        return snp + sum(1 for op, length in read.cigartuples if op in (1, 2))
+
+    except KeyError:
+        pass
+
+    try:
+        nm    = read.get_tag('NM')
+        indel = sum(length-1 for op, length in read.cigartuples if op in (1, 2))
+        
+        return nm - indel
+
+    except KeyError:
+        pass
+
+    except TypeError:
+        pass
+
+    return -1
 
 @memo
 def pad_softclip(sam):

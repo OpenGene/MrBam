@@ -30,7 +30,8 @@ def test_anno_1(tmpdir):
         fast   = False,
         qual   = 20,
         output = tmpdir.join("test_MrBam.vcf").strpath,
-        allow_inconsist = False
+        allow_inconsist = False,
+        mismatch_limit  = -1,
     )
 
     anno(o)

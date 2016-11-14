@@ -17,13 +17,20 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
     for name, reads in name_dict.items():
         if len(reads) == 1: # non-overlap or single
-            base, qual, r1start, r1len, r2start, tlen, isrev, paired = reads[0]
+            base, qual, r1start, r1len, nmismatch, r2start, tlen, isrev, paired = reads[0]
 
             if 0 <= qual <= o.qual:
                 nlowq += 1
                 if o.verbos:
                     print("low quality: " + name)
                 continue
+
+            if o.mismatch_limit != -1:
+                if nmismatch > o.mismatch_limit:
+                    nlowq += 1
+                    if o.verbos:
+                        print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
+                    continue
 
             if paired:
                 if o.fast:
@@ -40,8 +47,8 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
         elif len(reads) == 2: # overlap
             r1, r2 = reads
-            r1base, r1qual, r1start, r1len, *_ = r1
-            r2base, r2qual, r2start, r2len, *_ = r2
+            r1base, r1qual, r1start, r1len, r1nmismatch, *_ = r1
+            r2base, r2qual, r2start, r2len, r2nmismatch, *_ = r2
 
             if 0 <= r1qual <= o.qual or 0 <= r2qual <= o.qual:
                 nlowq += 2
@@ -54,6 +61,14 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                 if o.verbos:
                     print("pair inconsistent: " + name)
                 continue
+
+            if o.mismatch_limit != -1:
+                if r1nmismatch > o.mismatch_limit or r2nmismatch > o.mismatch_limit:
+                    nlowq += 2
+                    if o.verbos:
+                        print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
+                    continue
+
 
             start = min(r1start, r2start)
             tlen  = max(r1start+r1len, r2start+r2len) - start

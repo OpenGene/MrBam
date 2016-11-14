@@ -19,7 +19,7 @@ def test_get_reads_1(tmpdir):
              123456789_123456789_12
     """)
 
-    o = Namespace(verbos=False)
+    o = Namespace(verbos=False, mismatch_limit=-1)
     sam = AlignmentFile(tmpdir.join("test.bam").strpath)
 
     assert sum( 1 for _ in get_reads(o, sam, 'ref', '4') )  == 2
@@ -35,7 +35,7 @@ def test_get_reads_2(tmpdir):
         r1 -   .*.........
     """)
 
-    o = Namespace(verbos=False)
+    o = Namespace(verbos=False, mismatch_limit=-1)
     sam = AlignmentFile(tmpdir.join("test.bam").strpath)
 
     r = next(get_reads(o, sam, 'ref', '4'))
@@ -43,10 +43,11 @@ def test_get_reads_2(tmpdir):
     assert r[0] == "r1" # name
     assert r[3] == 0 # 0-based pos
     assert r[4] == 11 # length
-    assert r[5] == 2 # mate pos
-    assert r[6] == 13 # template length
-    assert r[7] == False # is_reverse
-    assert r[8] == True # paired and mapped
+    assert r[5] == -1 # mismatch, not caculated
+    assert r[6] == 2 # mate pos
+    assert r[7] == 13 # template length
+    assert r[8] == False # is_reverse
+    assert r[9] == True # paired and mapped
 
 def test_pad_softclip_1(tmpdir):
     "it should memorize the result"
@@ -56,7 +57,7 @@ def test_pad_softclip_1(tmpdir):
         r1 -   .*.......__
     """)
 
-    o = Namespace(verbos=False)
+    o = Namespace(verbos=False, mismatch_limit=-1)
     sam = AlignmentFile(tmpdir.join("test.bam").strpath)
 
     a = pad_softclip(sam)
@@ -75,7 +76,7 @@ def test_pad_softclip_2(tmpdir):
         r2 -   .*.......__
     """)
 
-    o = Namespace(verbos=False)
+    o = Namespace(verbos=False, mismatch_limit=-1)
     sam = AlignmentFile(tmpdir.join("test.bam").strpath)
 
     adjusted_pos = pad_softclip(sam)
@@ -93,7 +94,7 @@ def test_pad_softclip_3(tmpdir):
         r2 +   .*.......__
     """)
 
-    o = Namespace(verbos=False)
+    o = Namespace(verbos=False, mismatch_limit=-1)
     sam = AlignmentFile(tmpdir.join("test.bam").strpath)
 
     adjusted_pos = pad_softclip(sam)
