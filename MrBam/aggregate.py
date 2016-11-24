@@ -17,7 +17,7 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
     for name, reads in name_dict.items():
         if len(reads) == 1: # non-overlap or single
-            base, qual, r1start, r1len, nmismatch, r2start, tlen, isrev, paired = reads[0]
+            base, qual, r1start, r1len, nmismatch, XA, r2start, tlen, isrev, paired = reads[0]
 
             if 0 <= qual <= o.qual:
                 nlowq += 1
@@ -31,6 +31,12 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                     if o.verbos:
                         print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
                     continue
+
+            if XA:
+                nlowq += 1
+                if o.verbos:
+                    print("multiple alignment: " + name)
+                continue
 
             if paired:
                 if o.fast:
@@ -47,10 +53,10 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
         elif len(reads) == 2: # overlap
             r1, r2 = reads
-            r1base, r1qual, r1start, r1len, r1nmismatch, *_ = r1
-            r2base, r2qual, r2start, r2len, r2nmismatch, *_ = r2
+            r1base, r1qual, r1start, r1len, r1nmismatch, r1XA, *_ = r1
+            r2base, r2qual, r2start, r2len, r2nmismatch, r2XA, *_ = r2
 
-            if 0 <= r1qual <= o.qual or 0 <= r2qual <= o.qual:
+            if 0 <= r1qual <= o.qual and 0 <= r2qual <= o.qual:
                 nlowq += 2
                 if o.verbos:
                     print("low quality: " + name)
@@ -69,6 +75,11 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                         print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
                     continue
 
+            if r1XA or r2XA:
+                nlowq += 2
+                if o.verbos:
+                    print("multiple alignment: " + name)
+                continue
 
             start = min(r1start, r2start)
             tlen  = max(r1start+r1len, r2start+r2len) - start

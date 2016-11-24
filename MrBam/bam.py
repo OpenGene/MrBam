@@ -31,6 +31,7 @@ def get_reads(o, sam, chr, pos):
             read.reference_start - read.query_alignment_start,
             read.infer_query_length(),
             -1 if o.mismatch_limit == -1 else nmismatch(read),
+            read.has_tag("XA"),
             read.next_reference_start,
             abs(read.template_length),
             read.is_reverse,

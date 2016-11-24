@@ -14,6 +14,9 @@ def anno(o):
 
     with open(o.query) as fin, open(o.output, 'w') as fout:
         def dispatch(state, line):
+            if o.skip > 0:
+                o.skip -= 1
+                return copy, State.before
             if line.startswith('##FORMAT'):
                 if state in (State.before, State.under):
                     return copy, State.under
@@ -34,7 +37,7 @@ def anno(o):
 
         def add_head(line):
             if o.simple:
-                fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique DNA Supports Alt, Non-Overlaps Are Treated As Single. Comma Separated: Multiple_Overlap, One_Overlap, Multiple_Single, One_Single">\n""")
+                fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique DNA Supports Alt, Non-Overlaps Are Treated As Single. Comma Separated: Multiple_Overlap, Multiple_Single, One_Overlap, One_Single">\n""")
             else:
                 fout.write("""##FORMAT=<ID=UDP,Number=1,Type=String,Description="Unique DNA. Comma Separated: Multiple_Overlap_Ref, Multiple_Nonoverlap_Ref, Multiple_Single_Ref, One_Overlap_Ref, One_Nonoverlap_Ref, One_Single_Ref, Multiple_Overlap_Alt, Multiple_Nonoverlap_Alt, Multiple_Single_Alt, One_Overlap_Alt, One_Nonoverlap_Alt, One_Single_Alt">\n""")
             fout.write(line)

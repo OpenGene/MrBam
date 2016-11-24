@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+if [[ $# -eq 0 ]] ; then
+    echo "usage: paraMrBam 16 input.vcf [options for MrBam, except vcf, -o and --skip] > output.vcf"
+    echo "if second argument ends in .txt, it will skip the first line automatically"
+    exit 1
+fi
+
+TMP=$(mktemp -d)
+
+let LINE=($(wc -l < $2)+$1-1)/$1
+
+cd $CWD
+
+if [[ $2 =~ \.txt$ ]]; then
+    echo $(head -n 1 $2)
+    tail $2 -n +2 | split -l $LINE - $TMP/
+else
+    split -l $LINE $2 $TMP/
+fi
+
+for i in $TMP/*; do
+    MrBam "${@:3}" $i &
+done
+
+wait
+
+cat $TMP/*_MrBam*
+
+rm -rf $TMP
