@@ -32,7 +32,7 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                         print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
                     continue
 
-            if XA:
+            if o.dropXA and XA:
                 nlowq += 1
                 if o.verbos:
                     print("multiple alignment: " + name)
@@ -72,10 +72,10 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                 if r1nmismatch > o.mismatch_limit or r2nmismatch > o.mismatch_limit:
                     nlowq += 2
                     if o.verbos:
-                        print("%s has %d mismatch (limit: %d)" % (name, nmismatch, o.mismatch_limit))
+                        print("%s has %d mismatch (limit: %d)" % (name, max(r1nmismatch, r2nmismatch), o.mismatch_limit))
                     continue
 
-            if r1XA or r2XA:
+            if o.dropXA and (r1XA or r2XA):
                 nlowq += 2
                 if o.verbos:
                     print("multiple alignment: " + name)
