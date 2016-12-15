@@ -11,7 +11,7 @@ def count_different_type(o, pairs, single, alt, ref):
     for (*_, overlaped), reads in pairs.items():
         c = Counter( base for base, qual in reads )
 
-        if o.allow_inconsist:
+        if not o.drop_inconsist:
             c = c.items()
         else:
             num_all = sum(c.values())
@@ -51,7 +51,7 @@ def count_different_type(o, pairs, single, alt, ref):
     for reads in single.values():
         c = Counter( base for base, qual in reads )
 
-        if o.allow_inconsist:
+        if not o.drop_inconsist:
             c = c.items()
         else:
             num_all = sum(c.values())
