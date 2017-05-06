@@ -23,18 +23,25 @@ positional arguments:
   query                vcf file contains mutations to query
 
 optional arguments:
-  -h, --help           show this help message and exit
-  -c, --cfdna CFDNA    bam file contains cfdna reads info. There must be a
-                       corresponding .bai file in the same directory
-  -g, --gdna GDNA      bam file contains gdna reads info. There must be a
-                       corresponding .bai file in the same directory
-  -o, --output OUTPUT  output vcf file. Will be overwritten if already exists
-  -i, --info INFO      additional infomations about these position
-  -q, --qual QUAL      drop bases whose qulity is less than this (default: 20)
-  -s, --simple         annotate less infomations into vcf output
-  -f, --fast           do not infer origin read size by CIGAR, it can be
-                       faster and consume less memory.
-  -v, --verbos         output debug info
+  -h, --help            show this help message and exit
+  -c, --cfdna CFDNA     bam file contains cfdna reads info. There must be a
+                        corresponding .bai file in the same directory
+  -g, --gdna GDNA       bam file contains gdna reads info. There must be a
+                        corresponding .bai file in the same directory
+  -o, --output OUTPUT   output vcf file. Will be overwritten if already exists
+  --skip SKIP           skip the first N lines
+  -q, --qual QUAL       drop bases whose qulity is less than this (default:
+                        25)
+  -s, --simple          annotate less infomations into vcf output
+  -f, --fast            do not infer origin read size by CIGAR, it can be
+                        faster and consume less memory.
+  --drop-inconsist      drop different reads stack at the same position. This
+                        decreases sensitivity.
+  --dropXA              drop reads that has XA tag (multiple alignment)
+  -m, --mismatch-limit MISMATCH_LIMIT
+                        if set, drop reads that has more mismatches than the
+                        limit. requires a 'MD' or a 'NM' tag to be present.
+  -v, --verbos          output debug info
 ```
 
 # Performace
@@ -54,5 +61,3 @@ Sam4     --fast    2338          648336     60393        36
 * CPU_time is user + sys
 * Memory may vary accroding to system memory pressure
 * Test on Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
-
-# Under development
