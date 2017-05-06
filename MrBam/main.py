@@ -22,7 +22,7 @@ class SingleMetavarHelpFormatter(RawDescriptionHelpFormatter):
             return ', '.join(parts)
 
 def parse_args():
-    description = "example:\n  $ MrBam sample.vcf --cfdna sample_cfdna.bam -o sample_MrBam.vcf --simple --allow-inconsist"
+    description = "example:\n  $ MrBam sample.vcf --cfdna sample_cfdna.bam -o sample_MrBam.vcf --simple"
 
     parser = ArgumentParser(formatter_class=SingleMetavarHelpFormatter, description=description)
 
