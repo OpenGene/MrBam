@@ -1,9 +1,12 @@
-from MrBam.tools import memo, try_append
+#from MrBam.tools import memo, try_append
+from tools import memo, try_append
 
-def get_reads(o, sam, chr, pos):
+
+def get_reads(o, sam, chr, pos, ref):
+#def get_reads(sam, chr, pos, ref):
     "get all reads covers chr:pos"
 
-    pos = int(pos) - 1 # 0-based leftmost coordinate
+    pos = int(pos) - 1  # 0-based leftmost coordinate
 
     for read in sam.fetch(chr, pos, pos+1):
         aligned_pairs = read.get_aligned_pairs()
@@ -15,18 +18,22 @@ def get_reads(o, sam, chr, pos):
 
         try:
             i, query_pos = next((i, qpos) for (i, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos)
-            if query_pos == None:
+            if query_pos is None:
                 t = 'D'
-            elif i+1 < len(aligned_pairs) and aligned_pairs[i+1][1] == None:
+            elif i+1 < len(aligned_pairs) and aligned_pairs[i+1][1] is None:
                 t = 'I'
             else:
-                t = 'M'
+                if read.query_sequence[query_pos] != ref:
+                    t = 'snv'
+                else:
+                    t = 'M'
+
         except:
             continue
 
         yield (
             read.query_name,
-            t  if t in ('D', 'I') else read.query_sequence[query_pos],
+            t if t in ('D', 'I') else read.query_sequence[query_pos],
             -1 if t in ('D', 'I') else read.query_qualities[query_pos],
             read.reference_start - read.query_alignment_start,
             read.infer_query_length(),
@@ -35,8 +42,14 @@ def get_reads(o, sam, chr, pos):
             read.next_reference_start,
             abs(read.template_length),
             read.is_reverse,
-            read.is_paired and not read.mate_is_unmapped
+            read.is_paired and not read.mate_is_unmapped,
+            False if t == 'M' else q10(read),
+            False if t == 'M' else middle(read, i, t),
+            read.cigartuples,
+            read.reference_start,
+            read.get_tag('CN')
         )
+
 
 def nmismatch(read):
     try:
@@ -57,7 +70,7 @@ def nmismatch(read):
         pass
 
     try:
-        nm    = read.get_tag('NM')
+        nm = read.get_tag('NM')
         indel = sum(length-1 for op, length in read.cigartuples if op in (1, 2))
         
         return nm - indel
@@ -69,6 +82,7 @@ def nmismatch(read):
         pass
 
     return -1
+
 
 @memo
 def pad_softclip(sam):
@@ -95,3 +109,51 @@ def pad_softclip(sam):
             pairdict[k] = start, length
 
     return pairdict
+
+
+def q10(read):
+    aver = sum(read.query_qualities) / len(read.query_qualities)
+    if aver >= 10:
+        return True
+    else:
+        return False
+
+
+def middle(read, i, var):
+    # removing deletions and softclipped bases before mutation site while keeping insertions
+    if var == "i": 
+        i += 1
+    loc = i
+    dis = 0
+    for mut, num in read.cigartuples:
+        if dis < i + 1:  
+            if mut == 4 or mut == 2:
+                for tmp in range(dis, dis + num): # mutation may not be the first base in indel area
+                    if tmp <= i:
+                        loc -= 1
+                    else:
+                        loc /= len(read.query_sequence)
+                        if 0.1 <= loc <= 0.9:
+                                return True
+                        else:
+                                return False                       
+
+            elif mut == 0 or mut == 1:
+                    for tmp in range(dis, dis + num):
+                        if tmp == i:
+                            loc /= len(read.query_sequence)
+                            if 0.1 <= loc <= 0.9:
+                                return True
+                            else:
+                                return False
+            dis += num                         
+        else:
+            loc /= len(read.query_sequence)
+            if 0.1 <= loc <= 0.9:
+                return True
+            else:
+                return False
+    # onle mis/match left
+    #print(read.cigartuples)
+    #rint("error in mutation location: %s %d" % (read.query_name, i))
+    raise Exception("error in mutation location: %s %d " % (read.query_name, i))

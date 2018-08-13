@@ -17,7 +17,7 @@ def aggregate_reads(o, reads, adjusted_pos=None):
 
     for name, reads in name_dict.items():
         if len(reads) == 1: # non-overlap or single
-            base, qual, r1start, r1len, nmismatch, XA, r2start, tlen, isrev, paired = reads[0]
+            base, qual, r1start, r1len, nmismatch, XA, r2start, tlen, isrev, paired ,*_ = reads[0]
 
             if 0 <= qual <= o.qual:
                 nlowq += 1
@@ -92,4 +92,4 @@ def aggregate_reads(o, reads, adjusted_pos=None):
                 print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, len(reads)))
             nerror += len(reads)
 
-    return unique_pairs, unique_single, nsum, nerror, nlowq, ninconsis
+    return unique_pairs, unique_single, nsum, nerror, nlowq, ninconsis, name_dict
