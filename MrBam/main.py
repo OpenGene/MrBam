@@ -38,6 +38,8 @@ def parse_args():
     parser.add_argument('--dropXA', action='store_true', help="drop reads that has XA tag (multiple alignment)")
     parser.add_argument('-m', '--mismatch-limit', type=int, default=-1, help="if set, drop reads that has more mismatches than the limit. requires a 'MD' or a 'NM' tag to be present.")
     parser.add_argument('-v', '--verbos', action='store_true', help="output debug info")
+    parser.add_argument('-r', '--repeat', help="repeat region in huam genome")
+    parser.add_argument('-u', '--UMI',action='store_true',help="True when sample sequenced by duplex")
 
     return parser.parse_args()
 
