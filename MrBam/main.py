@@ -41,9 +41,10 @@ def parse_args():
     parser.add_argument('-m', '--mismatch-limit', type=int, default=-1, help="if set, drop reads that has more mismatches than the limit. requires a 'MD' or a 'NM' tag to be present.")
     parser.add_argument('-v', '--verbos', action='store_true', help="output debug info")
     parser.add_argument('-r', '--repeat', help="repeat region in huam genome")
-    parser.add_argument('-u', '--UMI', action='store_true', help="statistics umi sequences when sample sequenced by duplex UMI")
+    parser.add_argument('-u', '--UMI', action='store_true', help="count umi sequences when sample sequenced by duplex UMI")
     parser.add_argument('--indel', action='store_true',help="only indel exists in vcf file")
     parser.add_argument('--snp', action='store_true',help="only snp exists in vcf file")
+    parser.add_argument('--alt', action='store_true',help="only count reads'info with snv or indel")
 
     return parser.parse_args()
 
@@ -75,6 +76,5 @@ if __name__ == '__main__':
     anno(o)
     t2 = datetime.now()
     t_used = (t2 - t1).seconds
-    if o.verbos:
-        logging.warning("analysis of %s was finished, %d seconds used !" % (o.query, t_used))
+    logging.warning("analysis of %s was finished, %d seconds used !" % (o.query, t_used))
     

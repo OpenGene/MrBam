@@ -4,13 +4,13 @@ def count_different_type(o, pairs, single, alt, ref):
 #def count_different_type(pairs, single, alt, ref):
     mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, inconsis = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     if o.indel:
-        if ref[0]=='-' or (len(alt) >= 2):
+        if ref =='-' or len(alt) >= 2:
             alt, ref = 'I', 'ATCG'
-        elif alt=='-' or len(ref) >= 2:
+        elif alt =='-' or len(ref) >= 2:
             alt, ref = 'D', 'ATCG'
 
     for (*_, overlaped), reads in pairs.items():
-        c = Counter( ''.join(base) for base, qual in reads )
+        c = Counter( base for base, qual in reads )
 
         if not o.drop_inconsist:
             c = c.items()
@@ -48,6 +48,7 @@ def count_different_type(o, pairs, single, alt, ref):
                         mor += 1
                     else:
                         mnr += 1
+                        
     for reads in single.values():
         c = Counter( base for base, qual in reads )
 

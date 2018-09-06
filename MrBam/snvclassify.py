@@ -1,8 +1,7 @@
 from collections import Counter
 from MrBam.tools import try_append 
-#from tools import try_append
 
-def snv_mut(reads, ref_set, o, pad_softclip = None):
+def snv_mut(reads, o, pad_softclip = None):
 #def snv_mut(reads, ref_set, pad_softclip = None):    
     "gettting all possible mutation combinations, including MNV(Multiple Necluotide Variation)"
     "aggregate reads by startpos, endpos and base"
@@ -23,7 +22,7 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
     for name in list(name_dict.keys()):
         if len(name_dict[name]) == 1: # non-overlap or single
 
-            [base[0], mut[0], qual[0], start_self[0], query_len[0], nmismatch[0], XA[0], template_len[0],
+            [mut[0], qual[0], start_self[0], query_len[0], nmismatch[0], XA[0], template_len[0],
              start_next[0], reverse[0], paired[0], q10[0], terminal[0], cigartuples[0], reference_start[0],
              copy_number[0], mapping_quality[0]] = name_dict[name][0]
 
@@ -46,9 +45,6 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
                 del name_dict[name]
                 continue
             
-            if o.snp:
-                snv.append(''.join(mut[0]))
-
             if paired[0]:
                 if o.fast:
                     start = min(start_self[0], start_next[0])
@@ -58,23 +54,19 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
                         if o.verbos:
                             print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, template_len[0]))
                         continue
-                if o.snp:
-                    try_append(unique_pairs, (start, template_len[0], False), (''.join(mut[0]), qual[0]))
-                else:
-                    try_append(unique_pairs, (start, template_len[0], False), (base[0], qual[0]))
+                
+                try_append(unique_pairs, (start, template_len[0], False), (mut[0], qual[0]))
+
             else:
-                if o.snp:
-                    try_append(unique_single, (start_self[0], query_len[0], reverse[0]), (''.join(mut[0]), qual[0]))
-                else:
-                    try_append(unique_single, (start_self[0], query_len[0], reverse[0]), (base[0], qual[0]))
+                try_append(unique_single, (start_self[0], query_len[0], reverse[0]),( mut[0],qual[0]))
 
         elif len(name_dict[name]) == 2:  # pe reads with mutation site in overlap area
             
-            [base[0], mut[0], qual[0], start_self[0], query_len[0], nmismatch[0], XA[0], template_len[0],
+            [mut[0], qual[0], start_self[0], query_len[0], nmismatch[0], XA[0], template_len[0],
              start_next[0], reverse[0], paired[0], q10[0], terminal[0], cigartuples[0],reference_start[0],
              copy_number[0], mapping_quality[0]] = name_dict[name][0]
 
-            [base[1], mut[1], qual[1], start_self[1], query_len[1], nmismatch[1], XA[1], template_len[1],
+            [mut[1], qual[1], start_self[1], query_len[1], nmismatch[1], XA[1], template_len[1],
              start_next[1], reverse[1], paired[1], q10[1], terminal[1], cigartuples[1], reference_start[1],
              copy_number[1], mapping_quality[1]]= name_dict[name][1]
 
@@ -84,7 +76,7 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
                 del name_dict[name]
                 continue
 
-            if base[0] != base[1]:
+            if mut[0] != mut[1]:
                 if o.verbos:
                     print("pair inconsistent: " + name)
                 del name_dict[name]
@@ -103,26 +95,27 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
                 del name_dict[name]
                 continue                
             
-            if o.snp:
-                snv.append(''.join(mut[0]))
-                snv.append(''.join(mut[1]))
-
             start = min(start_self[0], start_self[1])
             tlen  = max(start_self[0] + query_len[0], start_self[1] + query_len[1]) - start
             qual[0]  = max(qual[0], qual[1])
-            if o.snp:
-                try_append(unique_pairs, (start, tlen, True), (''.join(mut[0]), qual[0]))
-            else:
-                try_append(unique_pairs, (start, tlen, True), (base[0], qual[0]))
+
+            try_append(unique_pairs, (start, tlen, True), (mut[0], qual[0]))
+        
         else:
             if o.verbos:
                 print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, len(name_dict[name])))
 
-    if o.snp:
+    if False:
         c = Counter(snv)
         snv = {}
 
-        if len(ref_set) == 2:
+        if len(ref_set) == 1:
+            # single variation
+            for mut, num in c.items():
+                if mut != ref_set[0]:
+                    snv[mut] = num
+
+        elif len(ref_set) == 2:
             # continuous bases
             for mut, num in c.items():
                 if mut == ref_set[0] + ref_set[1] or mut == ref_set[0] + 'N' or mut == 'N' + ref_set[1]:
@@ -145,15 +138,10 @@ def snv_mut(reads, ref_set, o, pad_softclip = None):
                 elif mut[1] != ref_set[1]:
                         snv['N' + mut[1]] = num
                 else:
-                    raise Exception ("unclear variation type2 %s" % mut)
+                    raise Exception ("unclear variation type %s" % mut)
 
-        elif len(ref_set) == 1:
-            # single variation
-            for mut, num in c.items():
-                if mut != ref_set[0]:
-                    snv[mut] = num
         else:
-            raise Exception('len over 2 in ref_set ', ref_set, name_dict)                
+            raise Exception('length over 2 in ref_set ', ref_set, name_dict)                
 
         if o.verbos:
             print("initial called snvs: ", snv)
