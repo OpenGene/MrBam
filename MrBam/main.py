@@ -76,5 +76,5 @@ if __name__ == '__main__':
     anno(o)
     t2 = datetime.now()
     t_used = (t2 - t1).seconds
-    logging.warning("analysis of %s was finished, %d seconds used !" % (o.query, t_used))
+    #logging.warning("analysis of %s was finished, %d seconds used !" % (o.query, t_used))
     

@@ -3,8 +3,10 @@ from collections import Counter
 
 def extra_info(o, name_dict, ref, alt):
 
-    nq10, nterminal, nmulti, noverlap_pe, noverlap_se, numi, nCN_1, nCN_2, ntotal, nmapqual, ave_mapqual \
-    = [0,0], [0,0], [0,0], [0,0], [0,0], ['NA','NA'], [0,0], [0,0], [0,0], [0,0], [0,0]
+    MaxInsertSize = 10000
+    nq10, nterminal, nmulti, noverlap_pe, noverlap_se, numi, nCN_1, nCN_2, ntotal, nmapqual, ave_mapqual, \
+    totalInsertSize, insertSize, ave_insertSize \
+    = [0,0], [0,0], [0,0], [0,0], [0,0], ['NA','NA'], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0],[0,0]
     if o.UMI:
         numi = [0,0]
 
@@ -35,7 +37,7 @@ def extra_info(o, name_dict, ref, alt):
     for name, reads in name_dict.items():
         if len(reads) == 1:
             try:
-                mut[0], qual, r1start, r1len, nmismatch, XA[0], *_, q10[0], terminal[0], cigartuples[0] \
+                mut[0], qual, r1start, r1len, nmismatch, XA[0], insertSize[0], *_, q10[0], terminal[0], cigartuples[0] \
                 , reference_start[0], copy_number[0], mapping_quality[0] = reads[0]
                 
             except TypeError:
@@ -57,13 +59,19 @@ def extra_info(o, name_dict, ref, alt):
                 noverlap_se[i] += 1
                 nmapqual[i] += mapping_quality[0]
                 ntotal[i] += 1
+                if insertSize[0] <= MaxInsertSize:
+                    totalInsertSize[0] += insertSize[0]
+
+                #test
+                if o.verbos:
+                    print('se insertSize ',name, "\t", insertSize[0])
 
         elif len(reads) == 2:
             r1, r2 = reads
             try:
-                mut[0], qual, r1start, r1len, nmismatch, XA[0], *_, q10[0], terminal[0], cigartuples[0] \
+                mut[0], qual, r1start, r1len, nmismatch, XA[0], insertSize[0], *_, q10[0], terminal[0], cigartuples[0] \
                 , reference_start[0], copy_number[0], mapping_quality[0] = reads[0]
-                mut[1], qual, r1start, r1len, nmismatch, XA[1], *_, q10[1], terminal[1], cigartuples[1] \
+                mut[1], qual, r1start, r1len, nmismatch, XA[1], insertSize[1], *_, q10[1], terminal[1], cigartuples[1] \
                 , reference_start[1], copy_number[1], mapping_quality[1] = reads[1]
 
             except TypeError:
@@ -86,13 +94,27 @@ def extra_info(o, name_dict, ref, alt):
                     nmapqual[j] += mapping_quality[i]
                     ntotal[j] += 1
                     noverlap_pe[j] += 0.5
+                    if insertSize[0] == insertSize[1]:
+                        if i == 0 and insertSize[0] <= MaxInsertSize:
+                            totalInsertSize[0] += insertSize[0]
+                    else:
+                        print("pair-end owes various insertSize", name)
+                        raise Exception("size: ", insertSize)
 
-        i = 0
-        if ntotal[i] != 0:
-            ave_mapqual[i] = int(nmapqual[i] / ntotal[i])                    
-        else:
-            ave_mapqual[i] = 0
-    
+                    #test
+                    if o.verbos and i == 0:
+                        print('pe insertSize ',name, "\t",insertSize[0])
+
+    i = 0
+    if ntotal[i] != 0:
+        ave_mapqual[i] = int(nmapqual[i] / ntotal[i])                    
+        ave_insertSize[i] = int(totalInsertSize[i] / (noverlap_pe[i] + noverlap_se[i]))
+        if o.verbos:
+            print("totalInsertSize: " ,totalInsertSize[i],"\t",noverlap_se[i] + noverlap_pe[i])
+    else:
+        ave_mapqual[i] = 0
+        
+
     if o.UMI:
         UMI_set = []
         numi_tmp = 0
@@ -119,4 +141,4 @@ def extra_info(o, name_dict, ref, alt):
                 numi_tmp += 1
         numi[0] = numi_tmp   
 
-    return nq10[0], nterminal[0], nmulti[0], int(noverlap_pe[0]), noverlap_se[0], numi[0], int(nCN_1[0]), int(nCN_2[0]), ave_mapqual[0]
+    return nq10[0], nterminal[0], nmulti[0], int(noverlap_pe[0]), noverlap_se[0], numi[0], int(nCN_1[0]), int(nCN_2[0]), ave_mapqual[0], ave_insertSize[0]

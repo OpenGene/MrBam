@@ -1,7 +1,7 @@
 from collections import Counter
 from MrBam.tools import try_append 
 
-def snv_mut(reads, o, pad_softclip = None):
+def snv_mut(reads, o, ref, alt, pad_softclip = None):
 #def snv_mut(reads, ref_set, pad_softclip = None):    
     "gettting all possible mutation combinations, including MNV(Multiple Necluotide Variation)"
     "aggregate reads by startpos, endpos and base"
@@ -60,6 +60,9 @@ def snv_mut(reads, o, pad_softclip = None):
             else:
                 try_append(unique_single, (start_self[0], query_len[0], reverse[0]),( mut[0],qual[0]))
 
+            if o.snp and mut[0] != ref:
+                snv.append(mut[0])
+
         elif len(name_dict[name]) == 2:  # pe reads with mutation site in overlap area
             
             [mut[0], qual[0], start_self[0], query_len[0], nmismatch[0], XA[0], template_len[0],
@@ -100,21 +103,23 @@ def snv_mut(reads, o, pad_softclip = None):
             qual[0]  = max(qual[0], qual[1])
 
             try_append(unique_pairs, (start, tlen, True), (mut[0], qual[0]))
-        
+
+            if o.snp and mut[0] != ref:
+                snv.append(mut[0])
+
         else:
             if o.verbos:
                 print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, len(name_dict[name])))
 
-    if False:
-        c = Counter(snv)
-        snv = {}
+    if o.snp:
+        #snv = {}
 
-        if len(ref_set) == 1:
-            # single variation
-            for mut, num in c.items():
-                if mut != ref_set[0]:
-                    snv[mut] = num
-
+        '''
+        # single variation
+        for mut, num in c.items():
+            if mut != ref :
+                snv[mut] = num
+        
         elif len(ref_set) == 2:
             # continuous bases
             for mut, num in c.items():
@@ -142,21 +147,26 @@ def snv_mut(reads, o, pad_softclip = None):
 
         else:
             raise Exception('length over 2 in ref_set ', ref_set, name_dict)                
-
+        '''
+        c = Counter(snv)
         if o.verbos:
-            print("initial called snvs: ", snv)
-        
-        variation = []
-        for mut in snv:
-            if snv[mut] >= 4:
-                # mutation with supporing reads >= 4 will be regarded as novel snv
-                variation.append(mut)
+            print("initial called snvs: ",end='')
+            for mut,num in c.items():
+                print(mut,end="\t")
+            print()        
 
+        variation = [alt]
+        for mut, num in c.items():
+            if mut != alt:
+                if num >= 4 and mut in 'ATGC':
+                    variation.append(mut)
+                # mutation with supporing reads >= 4 will be regarded as novel snv
+       
         if o.verbos:
             print("initial snvs after filtering ", variation)
 
         return variation, name_dict, unique_pairs, unique_single
 
     else:
-        return name_dict, unique_pairs, unique_single
+        return [alt], name_dict, unique_pairs, unique_single
 

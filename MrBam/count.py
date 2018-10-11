@@ -3,6 +3,7 @@ from collections import Counter
 def count_different_type(o, pairs, single, alt, ref):
 #def count_different_type(pairs, single, alt, ref):
     mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, inconsis = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    
     if o.indel:
         if ref =='-' or len(alt) >= 2:
             alt, ref = 'I', 'ATCG'
