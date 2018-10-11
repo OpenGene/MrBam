@@ -1,35 +1,38 @@
-#from MrBam.tools import memo, try_append
-from tools import memo, try_append
+from MrBam.tools import memo
 
+def get_infor(o, reads, pos, ref):
 
-def get_reads(o, sam, chr, pos, ref):
-#def get_reads(sam, chr, pos, ref):
-    "get all reads covers chr:pos"
-
-    pos = int(pos) - 1  # 0-based leftmost coordinate
-
-    for read in sam.fetch(chr, pos, pos+1):
+    for read in reads:
         aligned_pairs = read.get_aligned_pairs()
-
         if len(aligned_pairs) == 0:
             if o.verbos:
                 print("read not aligned: " + read.query_name)
             continue
-
+        
+        aligned_dict = {}
+        tmp = -1
+        for base, num in read.cigartuples:
+            for x in range(1, num + 1):
+                aligned_dict[x + tmp] = base
+            tmp += num
+        # the last matched base with softclipped bases left shouldn't be seen as insertion 
+        
         try:
-            i, query_pos = next((i, qpos) for (i, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos)
-            if query_pos is None:
-                t = 'D'
-            elif i+1 < len(aligned_pairs) and aligned_pairs[i+1][1] is None:
-                t = 'I'
-            else:
-                if read.query_sequence[query_pos] != ref:
-                    t = 'snv'
-                else:
+            j, query_pos = next((j, qpos) for (j, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos)
+
+            if query_pos is not None:
+
+                if j + 1 < len(aligned_dict) and aligned_dict[j+1] == 1:
+                    t = 'I'
+                elif read.query_sequence[query_pos] == ref:
                     t = 'M'
+                else:
+                    t = 'MIS'
+            else:
+                t = 'D'
 
         except:
-            continue
+            raise Exception('error in location', read.query_name, pos)
 
         yield (
             read.query_name,
@@ -39,15 +42,16 @@ def get_reads(o, sam, chr, pos, ref):
             read.infer_query_length(),
             -1 if o.mismatch_limit == -1 else nmismatch(read),
             read.has_tag("XA"),
-            read.next_reference_start,
             abs(read.template_length),
+            read.next_reference_start,
             read.is_reverse,
             read.is_paired and not read.mate_is_unmapped,
-            False if t == 'M' else q10(read),
-            False if t == 'M' else middle(read, i, t),
+            -1 if t == 'M' else q10(read),
+            -1 if t == 'M' else terminal(read, j, t),
             read.cigartuples,
             read.reference_start,
-            read.get_tag('CN')
+            read.get_tag('CN'),
+            read.mapping_quality
         )
 
 
@@ -56,10 +60,10 @@ def nmismatch(read):
         md = read.get_tag('MD')
         
         deletion, snp = False, 0
-        for i in md:
-            if i == '^':
+        for x in md:
+            if x == '^':
                 deletion = True
-            elif i in 'ATCG':
+            elif x in 'ATCG':
                 snp += not deletion
             else:
                 deletion = False
@@ -100,13 +104,13 @@ def pad_softclip(sam):
 
         try_append(namedict, name, (adjusted_start, adjusted_end))
 
-    for k, v in namedict.items():
+    for y, v in namedict.items():
         if len(v) != 2:
-            pairdict[k] = -1, len(v)
+            pairdict[y] = -1, len(v)
         else:
             start  = min(map(lambda x: x[0], v))
             length = max(map(lambda x: x[1], v)) - start
-            pairdict[k] = start, length
+            pairdict[y] = start, length
 
     return pairdict
 
@@ -119,41 +123,62 @@ def q10(read):
         return False
 
 
-def middle(read, i, var):
-    # removing deletions and softclipped bases before mutation site while keeping insertions
-    if var == "i": 
-        i += 1
-    loc = i
-    dis = 0
-    for mut, num in read.cigartuples:
-        if dis < i + 1:  
-            if mut == 4 or mut == 2:
-                for tmp in range(dis, dis + num): # mutation may not be the first base in indel area
-                    if tmp <= i:
-                        loc -= 1
-                    else:
-                        loc /= len(read.query_sequence)
-                        if 0.1 <= loc <= 0.9:
-                                return True
-                        else:
-                                return False                       
+def terminal(read, x, var):
+    # removing deletions and softclipped bases before mutation site while keeping insertions left
+    # mutation base wasn't included when calculating 
+    if var == "I": 
+        x += 1
+    loc = x + 1
+    dis = -1
+    sfc = sum(num for mut, num in read.cigartuples if mut == 4 )
+    finalLen = len(read.query_sequence) - sfc
 
-            elif mut == 0 or mut == 1:
-                    for tmp in range(dis, dis + num):
-                        if tmp == i:
-                            loc /= len(read.query_sequence)
-                            if 0.1 <= loc <= 0.9:
-                                return True
-                            else:
-                                return False
-            dis += num                         
-        else:
-            loc /= len(read.query_sequence)
-            if 0.1 <= loc <= 0.9:
-                return True
+    for mut, num in read.cigartuples:
+        if mut == 4 or mut == 2:
+            for tmp in range(dis + 1, dis + num + 1): # mutation may not be the first base in deletion area
+                if tmp < x:
+                    loc -= 1
+                else:
+                    loc -= 1
+                    loc /= finalLen
+                    if 0.1 < loc <= 0.9:
+                        return False
+                    else:
+                        return True
+
+        elif mut == 0 or mut == 1:
+            for tmp in range(dis + 1, dis + num + 1): 
+                if tmp == x:
+                    loc /= finalLen
+                    if 0.1 < loc <= 0.9: 
+                        return False
+                    else:
+                        return True
+        dis += num   
+
+    raise Exception("error in mutation location: %s %d " % (read.query_name, x))
+
+def continuous_bases(pos, read, aligned_pairs, aligned_dict):
+    bases = []
+    for pos in pos:
+        pos = int(pos) - 1
+        try:
+            x, query_pos = next((x, qpos) for (x, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos)
+            if query_pos is None:
+                bases.append('D')
+
+            elif x+1 < len(aligned_pairs) and aligned_pairs[x+1][1] is None:
+
+                if aligned_dict[x+1] == 1:
+                    bases.append('I')
+
+                elif aligned_dict[x+1] == 4:
+                    # the rest are softclipped not insertion
+                   bases.append(read.query_sequence[query_pos])
+
             else:
-                return False
-    # onle mis/match left
-    #print(read.cigartuples)
-    #rint("error in mutation location: %s %d" % (read.query_name, i))
-    raise Exception("error in mutation location: %s %d " % (read.query_name, i))
+                bases.append(read.query_sequence[query_pos])
+        except:
+            bases.append('N')
+            
+    return bases                
