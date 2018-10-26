@@ -18,6 +18,8 @@ def snv_mut(reads, o, ref, alt, pad_softclip = None):
     for read in reads:
         name, *info = read
         try_append(name_dict, name, info)
+    if o.verbos:
+        print("read from bam.py(pair-end)", len(name_dict))
 
     for name in list(name_dict.keys()):
         if len(name_dict[name]) == 1: # non-overlap or single
@@ -111,7 +113,7 @@ def snv_mut(reads, o, ref, alt, pad_softclip = None):
             if o.verbos:
                 print("%s: more than 2 reads (%d total) share the same name; all droped." % (name, len(name_dict[name])))
 
-    if o.snp:
+    if o.snp and not o.continous:
         #snv = {}
 
         '''
@@ -163,9 +165,23 @@ def snv_mut(reads, o, ref, alt, pad_softclip = None):
                 # mutation with supporing reads >= 4 will be regarded as novel snv
        
         if o.verbos:
-            print("initial snvs after filtering ", variation)
+            print("initial snvs after filtering ", variation, end = "")
+            print("ref ", ref, "alt: ", alt)
 
         return variation, name_dict, unique_pairs, unique_single
+
+    elif o.continous:
+        c = Counter(snv)
+        if o.verbos:
+            print("initial called snvs: ",end='')
+            for mut,num in c.items():
+                print(mut,end="\t")
+            print("\n","ref:",ref,"alt:", alt) 
+            print("reads number\t",len(name_dict),len(unique_pairs),len(unique_single),c,"final continous mut number: ",c[alt])
+
+        if c[alt] > 4:
+            return [alt], name_dict, unique_pairs, unique_single
+        return [], name_dict, unique_pairs, unique_single
 
     else:
         return [alt], name_dict, unique_pairs, unique_single

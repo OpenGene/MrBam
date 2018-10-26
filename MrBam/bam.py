@@ -1,14 +1,13 @@
 from MrBam.tools import memo
 
 def get_infor(o, reads, pos, ref):
-
     for read in reads:
         aligned_pairs = read.get_aligned_pairs()
         if len(aligned_pairs) == 0:
             if o.verbos:
                 print("read not aligned: " + read.query_name)
             continue
-        
+      
         aligned_dict = {}
         tmp = -1
         for base, num in read.cigartuples:
@@ -16,43 +15,69 @@ def get_infor(o, reads, pos, ref):
                 aligned_dict[x + tmp] = base
             tmp += num
         # the last matched base with softclipped bases left shouldn't be seen as insertion 
-        
-        try:
-            j, query_pos = next((j, qpos) for (j, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos)
 
-            if query_pos is not None:
+        readfilter = 'false'
+        if o.continous:
+            for i in range(len(aligned_pairs)):
+                if aligned_pairs[i][-1] is not None:
+                    if pos[0] < aligned_pairs[i][-1]:
+                        #print(pos[0],"filter1",aligned_pairs)
+                        readfilter = 'true' 
+                    break
+            
+            for j in range(1,len(aligned_pairs)+1):
+                i = -j
+                if aligned_pairs[i][-1] is not None:
+                    if pos[-1] > aligned_pairs[i][-1]:
+                        #print(pos[-1],"filter2",aligned_pairs)
+                        readfilter = 'true'
+                    break  
 
-                if j + 1 < len(aligned_dict) and aligned_dict[j+1] == 1:
-                    t = 'I'
-                elif read.query_sequence[query_pos] == ref:
-                    t = 'M'
+        if readfilter == 'false':     
+            try:
+                j, query_pos = next((j, qpos) for (j, (qpos, rpos)) in enumerate(aligned_pairs) if rpos == pos[0])
+                if query_pos is not None:
+                    if j + 1 < len(aligned_dict) and aligned_dict[j+1] == 1:
+                        t = 'I'
+                    elif len(pos) == 1:
+                        base = read.query_sequence[query_pos] 
+                        qual = read.query_qualities[query_pos] 
+                        if base == ref:
+                            t = 'M'
+                        else:
+                            t = 'MIS'
+                    else:
+                        base = read.query_sequence[query_pos:query_pos+2] 
+                        qual = sum(read.query_qualities[query_pos:query_pos+2]) / 2
+                        if base == ref:
+                            t = 'M'
+                        else:
+                            t = 'MIS'
                 else:
-                    t = 'MIS'
-            else:
-                t = 'D'
+                    t = 'D'
 
-        except:
-            raise Exception('error in location', read.query_name, pos)
+            except:
+                raise Exception('error in location', read.query_name, pos, query_pos)
 
-        yield (
-            read.query_name,
-            t if t in ('D', 'I') else read.query_sequence[query_pos],
-            -1 if t in ('D', 'I') else read.query_qualities[query_pos],
-            read.reference_start - read.query_alignment_start,
-            read.infer_query_length(),
-            -1 if o.mismatch_limit == -1 else nmismatch(read),
-            read.has_tag("XA"),
-            abs(read.template_length),
-            read.next_reference_start,
-            read.is_reverse,
-            read.is_paired and not read.mate_is_unmapped,
-            -1 if t == 'M' else q10(read),
-            -1 if t == 'M' else terminal(read, j, t),
-            read.cigartuples,
-            read.reference_start,
-            read.get_tag('CN'),
-            read.mapping_quality
-        )
+            yield (
+                read.query_name,
+                t if t in ('D', 'I') else base,
+                -1 if t in ('D', 'I') else qual,
+                read.reference_start - read.query_alignment_start,
+                read.infer_query_length(),
+                -1 if o.mismatch_limit == -1 else nmismatch(read),
+                read.has_tag("XA"),
+                abs(read.template_length),
+                read.next_reference_start,
+                read.is_reverse,
+                read.is_paired and not read.mate_is_unmapped,
+                -1 if t == 'M' else q10(read),
+                -1 if t == 'M' else terminal(read, j, t),
+                read.cigartuples,
+                read.reference_start,
+                read.get_tag('CN'),
+                read.mapping_quality
+            )
 
 
 def nmismatch(read):

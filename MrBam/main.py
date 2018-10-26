@@ -5,6 +5,8 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pysam import AlignmentFile
 from MrBam.anno import anno
 from datetime import datetime
+from MrBam.continous import continous
+from MrBam.explain import explain
 import logging
 
 class SingleMetavarHelpFormatter(RawDescriptionHelpFormatter):
@@ -45,10 +47,15 @@ def parse_args():
     parser.add_argument('--indel', action='store_true',help="only indel exists in vcf file")
     parser.add_argument('--snp', action='store_true',help="only snp exists in vcf file")
     parser.add_argument('--alt', action='store_true',help="only count reads'info with snv or indel")
+    parser.add_argument('--continous', action='store_true',help="count for continuous mutation site")
+    parser.add_argument('--explain', action='store_true', help="detail explanation for result")
 
     return parser.parse_args()
 
 def init(o):
+    if o.explain:
+        explain()
+
     if o.cfdna == None and o.gdna == None:
         raise Exception("At least one of --cfdna and --gdna should be specified")
 
@@ -73,7 +80,10 @@ if __name__ == '__main__':
     t1 = datetime.now()
     o = parse_args()
     init(o)
-    anno(o)
+    if o.continous:
+        continous(o)
+    else:
+        anno(o)
     t2 = datetime.now()
     t_used = (t2 - t1).seconds
     #logging.warning("analysis of %s was finished, %d seconds used !" % (o.query, t_used))

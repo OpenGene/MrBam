@@ -26,8 +26,11 @@ def anno(o):
         for line in fin:
             line = line.rstrip().split('\t')
             chr = line[0]
-            pos =int(line[1]) - 1
- 
+            try:
+                pos =int(line[1]) - 1
+            except:
+                raise Exception("vcf header should be expluded", o.query)
+
             if chr != LastChr:
                 LastPos = pos
                 LastChr = chr
@@ -160,7 +163,9 @@ def output(chr, pos, alt, variation_info, o, fout, reads_pos, k, rep_ref):
     ref = variation_info[tmp][3]
 
     repeat = repeat_area(rep_ref, chr, pos + 1, o)
-    new_reads = get_infor(o, reads_pos, pos, ref)
+    pos_set = [pos]
+    # to corporate with continous.py
+    new_reads = get_infor(o, reads_pos, pos_set, ref)
     mut_set, name_dict, unique_pairs, unique_single= snv_mut(new_reads, o, ref, alt, None if o.fast else pad_softclip(sam))
 
     for each_mut in mut_set:
@@ -188,13 +193,14 @@ def output(chr, pos, alt, variation_info, o, fout, reads_pos, k, rep_ref):
                     except:
                         raise Exception(gdna_alt, i, variation_info[tmp])
 
-                    extra_2 = repeat + ',' +  ','.join(map(str, [0] * 9))
+                    #extra_2 = repeat + ',' +  ','.join(map(str, [0] * 9))
+                    extra_2 =','.join(map(str, [0] * 9))
                     variation_info[tmp][-1] = extra_2
 
         mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa, _ = count_different_type(o, unique_pairs, unique_single, each_mut, ref)
-        (nq10_a, nterminal_a, nmulti_a, noverlap_pe_a, noverlap_se_a, numi_a, nCN_1_a, nCN_2_a, ave_mapqual_a, ave_insertSize_a) = extra_info(o, name_dict, ref, each_mut)
+        (nq10_a, nterminal_a, nmulti_a, noverlap_pe_a, noverlap_se_a, numi_a, nCN_1_a, nCN_2_a, nNonterminalMolecule_a, ave_mapqual_a, ave_insertSize_a) = extra_info(o, name_dict, ref, each_mut)
         variation_info[tmp][-2] += ':' + ','.join(map(str, (mor, mnr, msr, oor, onr, osr, moa, mna, msa, ooa, ona, osa)))
-        extra_2 = ','.join(map(str, (repeat, nq10_a, nterminal_a, nmulti_a, noverlap_pe_a, noverlap_se_a, numi_a, nCN_1_a, nCN_2_a, ave_mapqual_a, ave_insertSize_a)))
+        extra_2 = ','.join(map(str, (nq10_a, nterminal_a, nmulti_a, noverlap_pe_a, noverlap_se_a, numi_a, nCN_1_a, nCN_2_a, nNonterminalMolecule_a, ave_mapqual_a, ave_insertSize_a)))
         variation_info[tmp].append(extra_2)
 
         if k == 1:

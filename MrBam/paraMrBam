@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+if [[ $# -eq 0 ]] ; then
+    echo "usage: paraMrBam 16 input.vcf [options for MrBam, except vcf, -o and --skip] > output.vcf"
+    echo "if second argument ends in .txt, it will skip the first line automatically"
+    exit 1
+fi
+
+export PYTHONPATH=/haplox/users/wangzy/Software
+
+TMP=$(mktemp -d)
+cd $CWD
+vcf=$2
+
+for i in "$@"; do
+    if [ $i = "--snp" ];then
+    #echo "/usr/bin/python3 -m MrBam.main ${@:2} --continous -o $TMP/continous_MrBam.txt > $TMP/breaked.snp.txt"
+	/usr/bin/python3 -m MrBam.main ${@:2} --continous -o $TMP/continous_MrBam.txt > $TMP/breaked.snp.txt
+	#/data/haplox/users/wangzy/00.Tools/02.HGVS.parse/HGVS.parser.py $TMP/continous_MrBam.txt > $TMP/continous_HGVS.MrBam.txt 
+	# rm $TMP/continous_MrBam.txt
+    vcf=$TMP/breaked.snp.txt
+    fi
+done
+
+echo $(head -n 1 $vcf)
+let LINE=($(wc -l < $vcf)+ $1-1)/$1
+tail $vcf -n +2 | split -l $LINE - $TMP/
+
+for i in $TMP/*; do
+    if [ $i != $TMP/breaked.snp.txt ];then 
+        if [ $i != $TMP/continous_MrBam.txt ];then
+            /usr/bin/python3 -m MrBam.main  ${@:3} $i & 
+        fi
+    fi
+done
+wait
+
+cat $TMP/*_MrBam*
+rm -rf $TMP

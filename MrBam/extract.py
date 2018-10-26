@@ -3,10 +3,10 @@ from collections import Counter
 
 def extra_info(o, name_dict, ref, alt):
 
-    MaxInsertSize = 10000
-    nq10, nterminal, nmulti, noverlap_pe, noverlap_se, numi, nCN_1, nCN_2, ntotal, nmapqual, ave_mapqual, \
+    MaxInsertSize = 1000
+    nq10, nterminal, nNontermimalMolecule, nmulti, noverlap_pe, noverlap_se, numi, nCN_1, nCN_2, ntotal, nmapqual, ave_mapqual, \
     totalInsertSize, insertSize, ave_insertSize \
-    = [0,0], [0,0], [0,0], [0,0], [0,0], ['NA','NA'], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0],[0,0]
+    = [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], ['NA','NA'], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0],[0,0]
     if o.UMI:
         numi = [0,0]
 
@@ -48,6 +48,10 @@ def extra_info(o, name_dict, ref, alt):
             if mut[0] in alt:
                 if terminal[0] is True:
                     nterminal[i] += 1
+                elif q10[0] is True and not XA[0] and mapping_quality[0] > 0:
+                    nNontermimalMolecule[i] += 1
+                    if o.verbos:
+                        print("Good Molecule: SE: ", name,"\n",reads[0])
                 if q10[0] is True:
                     nq10[i] += 1
                 if XA[0]:
@@ -61,10 +65,6 @@ def extra_info(o, name_dict, ref, alt):
                 ntotal[i] += 1
                 if insertSize[0] <= MaxInsertSize:
                     totalInsertSize[0] += insertSize[0]
-
-                #test
-                if o.verbos:
-                    print('se insertSize ',name, "\t", insertSize[0])
 
         elif len(reads) == 2:
             r1, r2 = reads
@@ -85,6 +85,11 @@ def extra_info(o, name_dict, ref, alt):
                         nq10[j] += 1
                     if terminal[i] is True:
                         nterminal[j] += 1
+                    if i == 0 and terminal[0] is False and terminal[1] is False and q10[0] is True and q10[1] is True and \
+                    not XA[0] and not XA[1] and mapping_quality[0] > 0 and mapping_quality[1] > 0:
+                        nNontermimalMolecule[0] += 1 
+                        if o.verbos:
+                            print("Good Molecule: PE: ", name,"\n",reads[0],"\n",reads[1])
                     if XA[i]:
                         nmulti[j] += 1
                     if copy_number[i] >= 2:
@@ -101,16 +106,10 @@ def extra_info(o, name_dict, ref, alt):
                         print("pair-end owes various insertSize", name)
                         raise Exception("size: ", insertSize)
 
-                    #test
-                    if o.verbos and i == 0:
-                        print('pe insertSize ',name, "\t",insertSize[0])
-
     i = 0
     if ntotal[i] != 0:
         ave_mapqual[i] = int(nmapqual[i] / ntotal[i])                    
         ave_insertSize[i] = int(totalInsertSize[i] / (noverlap_pe[i] + noverlap_se[i]))
-        if o.verbos:
-            print("totalInsertSize: " ,totalInsertSize[i],"\t",noverlap_se[i] + noverlap_pe[i])
     else:
         ave_mapqual[i] = 0
         
@@ -141,4 +140,4 @@ def extra_info(o, name_dict, ref, alt):
                 numi_tmp += 1
         numi[0] = numi_tmp   
 
-    return nq10[0], nterminal[0], nmulti[0], int(noverlap_pe[0]), noverlap_se[0], numi[0], int(nCN_1[0]), int(nCN_2[0]), ave_mapqual[0], ave_insertSize[0]
+    return nq10[0], nterminal[0], nmulti[0], int(noverlap_pe[0]), noverlap_se[0], numi[0], int(nCN_1[0]), int(nCN_2[0]), nNontermimalMolecule[0], ave_mapqual[0], ave_insertSize[0]
