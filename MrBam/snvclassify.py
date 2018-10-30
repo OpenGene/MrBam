@@ -108,6 +108,7 @@ def snv_mut(reads, o, ref, alt, pad_softclip = None):
 
             if o.snp and mut[0] != ref:
                 snv.append(mut[0])
+                snv.append(mut[0])
 
         else:
             if o.verbos:
@@ -179,7 +180,7 @@ def snv_mut(reads, o, ref, alt, pad_softclip = None):
             print("\n","ref:",ref,"alt:", alt) 
             print("reads number\t",len(name_dict),len(unique_pairs),len(unique_single),c,"final continous mut number: ",c[alt])
 
-        if c[alt] > 4:
+        if c[alt] >= 4:
             return [alt], name_dict, unique_pairs, unique_single
         return [], name_dict, unique_pairs, unique_single
 
