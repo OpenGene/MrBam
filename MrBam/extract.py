@@ -48,7 +48,7 @@ def extra_info(o, name_dict, ref, alt):
             if mut[0] in alt:
                 if terminal[0] is True:
                     nterminal[i] += 1
-                elif q10[0] is True and not XA[0] and mapping_quality[0] > 0:
+                elif q10[0] is True and ((XA[0] is False) or (XA[0] is True and mapping_quality[0] > 0)):
                     nNontermimalMolecule[i] += 1
                     if o.verbos:
                         print("Good Molecule: SE: ", name,"\n",reads[0])
@@ -85,11 +85,12 @@ def extra_info(o, name_dict, ref, alt):
                         nq10[j] += 1
                     if terminal[i] is True:
                         nterminal[j] += 1
-                    if i == 0 and terminal[0] is False and terminal[1] is False and q10[0] is True and q10[1] is True and \
-                    not XA[0] and not XA[1] and mapping_quality[0] > 0 and mapping_quality[1] > 0:
-                        nNontermimalMolecule[0] += 1 
-                        if o.verbos:
-                            print("Good Molecule: PE: ", name,"\n",reads[0],"\n",reads[1])
+                    if i == 0 and q10[0] is True and q10[1] is True:
+                        if terminal[0] is False or terminal[1] is False:
+                            if not(XA[0] is True and mapping_quality[0] == 0 and XA[1] is True and mapping_quality[1] == 0):
+                                nNontermimalMolecule[0] += 1 
+                                if o.verbos:
+                                    print("Good Molecule: PE: ", name,"\n",reads[0],"\n",reads[1])
                     if XA[i]:
                         nmulti[j] += 1
                     if copy_number[i] >= 2:
