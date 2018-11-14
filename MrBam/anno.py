@@ -59,6 +59,12 @@ def anno(o):
             LastChr = ''
             LastPos = 0
             for read in sam:
+
+                try:
+                    cigarAvalable = read.reference_end - read.reference_start
+                except:
+                    continue
+
                 chr = read.reference_name
                 
                 if chr != LastChr:

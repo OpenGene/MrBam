@@ -32,6 +32,10 @@ def get_infor(o, reads, pos, ref):
                         #print(pos[-1],"filter2",aligned_pairs)
                         readfilter = 'true'
                     break  
+        try:
+            CN = read.get_tag('CN')
+        except:
+            CN = 2
 
         if readfilter == 'false':     
             try:
@@ -75,7 +79,7 @@ def get_infor(o, reads, pos, ref):
                 -1 if t == 'M' else terminal(read, j, t),
                 read.cigartuples,
                 read.reference_start,
-                read.get_tag('CN'),
+                CN,
                 read.mapping_quality
             )
 
