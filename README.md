@@ -1,6 +1,4 @@
 # MrBam
-[![Build Status](https://travis-ci.org/OpenGene/MrBam.svg?branch=master)](https://travis-ci.org/OpenGene/MrBam)
-[![Coverage Status](https://coveralls.io/repos/github/OpenGene/MrBam/badge.svg?branch=master)](https://coveralls.io/github/OpenGene/MrBam?branch=master)
 
 For a given mutation, query its mutated reads from a BAM, merge the reads by positions and give the unique count.
 
